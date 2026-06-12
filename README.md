@@ -27,7 +27,7 @@ The RK3588 is one of the most capable ARM SoCs ever shipped to hobbyists: an 8�
 ## Features
 
 - **Full RK3588 accelerator coverage**: per‑core CPU + Mali‑G610 GPU + RKNPU (per‑core when root) + Rockchip VPU (`mpp_service`) + RGA 2D engine + DDR controller + 7 thermal zones.
-- **Sub‑2% CPU** at 1 Hz refresh on the rock5bp itself. Static aarch64 binary, **no Go runtime overhead on startup**, no Python, no Node, no dependencies.
+- **Sub‑2% CPU** at 1 Hz refresh on the rock5bp itself. Single static aarch64 binary, no Python, no Node, no shared‑library footprint.
 - **Responsive layout**: collapses to 60 cols, expands to a two‑column wide layout at ≥150 cols. Body scrolls when content exceeds height; top/bottom border + footer stay pinned.
 - **Per‑section toggles**: turn CPU/MEM/GPU/NPU/VPU/RGA panels on or off with a single keypress (`c`/`m`/`g`/`n`/`v`/`a`).
 - **Optional tiers**: I/O (disks + network + thermal throttle), System (CMA, fan PWM, governor, PCIe links), and Kernel (context switches/sec, IRQ per‑CPU) — toggled with `i`/`s`/`k`, auto‑shown when the terminal is tall enough.
@@ -40,14 +40,15 @@ The RK3588 is one of the most capable ARM SoCs ever shipped to hobbyists: an 8�
 ### Pre-built binary (recommended)
 
 ```sh
-# Download latest release for linux/arm64
-curl -sSL https://github.com/isac322/rkmon/releases/latest/download/rkmon_0.2.0_linux_arm64.tar.gz \
+# Install rkmon v0.2.0 for linux/arm64
+VERSION=v0.2.0
+curl -sSL "https://github.com/isac322/rkmon/releases/download/${VERSION}/rkmon_${VERSION#v}_linux_arm64.tar.gz" \
   | tar -xz -C /tmp rkmon
 sudo install -m 0755 /tmp/rkmon /usr/local/bin/rkmon
 rkmon --version
 ```
 
-Or grab the tarball directly from the [latest release](https://github.com/isac322/rkmon/releases/latest) and verify with `checksums.txt`.
+Replace `v0.2.0` with the latest tag from the [Releases page](https://github.com/isac322/rkmon/releases). Each release also ships a `checksums.txt` you can verify with `sha256sum -c`.
 
 ### From source
 
@@ -87,6 +88,8 @@ sudo rkmon               # unlock NPU per-core, VPU load%, RGA load%
 | `home` `end` | Jump to top / bottom |
 
 ## Comparison
+
+Scope: general‑purpose terminal monitors on an RK3588 SBC. None of `htop`/`btop`/`gotop`/`nvtop` claim Rockchip‑specific support; the table just makes the resulting gap explicit.
 
 | Feature                          | rkmon          | htop          | btop          | gotop         | nvtop          |
 | -------------------------------- | -------------- | ------------- | ------------- | ------------- | -------------- |
