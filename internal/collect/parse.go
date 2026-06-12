@@ -126,7 +126,8 @@ func ParseDevfreqLoad(raw string) (pct int, freqHz uint64) {
 var npuCoreRE = regexp.MustCompile(`Core(\d+):\s*(\d+)%`)
 
 // ParseRKNPULoad parses /sys/kernel/debug/rknpu/load:
-//   "NPU load:  Core0:  0%, Core1: 12%, Core2:  0%,"
+//
+//	"NPU load:  Core0:  0%, Core1: 12%, Core2:  0%,"
 func ParseRKNPULoad(s string) []int {
 	var out []int
 	for _, m := range npuCoreRE.FindAllStringSubmatch(s, -1) {
@@ -223,10 +224,10 @@ func ParseUptimeSeconds(s string) float64 {
 
 // DiskCounters is one row of /proc/diskstats relevant to throughput/util.
 type DiskCounters struct {
-	Name           string
-	ReadSectors    uint64
-	WriteSectors   uint64
-	IOTimeMillis   uint64
+	Name         string
+	ReadSectors  uint64
+	WriteSectors uint64
+	IOTimeMillis uint64
 }
 
 // ParseDiskstats returns one entry per device line. Caller filters whole-disk
@@ -250,7 +251,7 @@ func ParseDiskstats(s string) []DiskCounters {
 
 // NetCounters tracks one interface's cumulative byte totals.
 type NetCounters struct {
-	Iface           string
+	Iface            string
 	RxBytes, TxBytes uint64
 }
 

@@ -42,21 +42,20 @@ type Collector struct {
 	prevNPULoad   int
 	npuSameCount  int
 
-	prevDisk    map[string]DiskCounters
-	prevDiskAt  time.Time
-	prevNet     map[string]NetCounters
-	prevNetAt   time.Time
-	prevCtxt    uint64
-	prevCtxtAt  time.Time
-	prevIRQ     []uint64
-	prevIRQAt   time.Time
+	prevDisk   map[string]DiskCounters
+	prevDiskAt time.Time
+	prevNet    map[string]NetCounters
+	prevNetAt  time.Time
+	prevCtxt   uint64
+	prevCtxtAt time.Time
+	prevIRQ    []uint64
+	prevIRQAt  time.Time
 
 	cachedDevfreqLimits map[string]freqLimits
 	cachedThermalTypes  map[string]string
 	cachedPCIe          []PCIeDev
 	cachedFanHwmon      string
 	mppIntervalChecked  bool
-	staticScanned       bool
 }
 
 type freqLimits struct {

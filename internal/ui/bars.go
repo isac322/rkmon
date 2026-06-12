@@ -2,8 +2,6 @@ package ui
 
 import (
 	"strings"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
 var fullBlock24 = strings.Repeat("█", 24)
@@ -106,19 +104,4 @@ func renderBarStale(s Styles, width int) string {
 	}
 	sb.WriteString(s.ansiReset)
 	return sb.String()
-}
-
-// pad returns text padded with spaces to exactly `width` visible cells.
-// If text is wider than width (after stripping ANSI), it is truncated.
-func pad(text string, width int) string {
-	w := lipgloss.Width(text)
-	switch {
-	case w == width:
-		return text
-	case w < width:
-		return text + strings.Repeat(" ", width-w)
-	default:
-		// truncation: best-effort, returns input (callers should size up).
-		return text
-	}
 }

@@ -138,21 +138,6 @@ func PctStyle(s Styles, pct float64) lipgloss.Style {
 
 func PctStaleStyle(s Styles) lipgloss.Style { return s.StaleStyle }
 
-func tempStyle(s Styles, c float64) lipgloss.Style {
-	switch {
-	case c < 35:
-		return s.tempBuckets[0]
-	case c < 50:
-		return s.tempBuckets[2]
-	case c < 65:
-		return s.tempBuckets[3]
-	case c < 78:
-		return s.tempBuckets[4]
-	default:
-		return s.tempBuckets[5]
-	}
-}
-
 // gradient endpoints (Nord-ish):
 //
 //	0%  -> #88c0d0 (frost cyan)   "cool/idle"

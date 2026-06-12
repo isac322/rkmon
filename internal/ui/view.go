@@ -14,9 +14,9 @@ import (
 
 // Layout encodes a responsive layout decision derived from term width.
 type Layout struct {
-	Width     int    // outer frame width
-	BarW      int    // bar width used for ALL bars in the frame
-	LabelW    int    // label column width
+	Width     int // outer frame width
+	BarW      int // bar width used for ALL bars in the frame
+	LabelW    int // label column width
 	Narrow    bool
 	Wide      bool
 	ShortTime bool // omit seconds in footer
@@ -26,9 +26,9 @@ type Layout struct {
 }
 
 const (
-	MinWidth      = 60
-	TwoColThresh  = 150
-	TwoColRightW  = 48
+	MinWidth     = 60
+	TwoColThresh = 150
+	TwoColRightW = 48
 )
 
 func layoutFor(width int) Layout {
