@@ -27,7 +27,7 @@ Stack refresh and CI/CD modernization.
 
 ### Security
 
-- **Redacted `your-rk3588-host`** from the Makefile and `docs/demo.tape`; rewrote the entire git history with `git filter-repo --replace-text` so no historical commit contains the private hostname.
+- **Redacted a private SSH hostname** from the Makefile and `docs/demo.tape`; rewrote the entire git history with `git filter-repo --replace-text` so no historical commit contains it.
 - **Rewrote author/committer email** across history from a personal address to the GitHub noreply alias (`isac322@users.noreply.github.com`) via `--mailmap`, so the public commit log no longer leaks the maintainer's primary mailbox.
 
 ## [0.2.0] - 2026-06-12
