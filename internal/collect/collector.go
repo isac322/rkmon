@@ -24,12 +24,14 @@ const (
 )
 
 // Cluster mapping for RK3588: cpu0-3 = A55 (little), cpu4-7 = A76 (big).
-var ClusterOf = []string{"A55", "A55", "A55", "A55", "A76", "A76", "A76", "A76"}
-var ClusterThermalZone = map[int]string{
-	0: "littlecore-thermal",
-	4: "bigcore0-thermal",
-	6: "bigcore1-thermal",
-}
+var (
+	ClusterOf          = []string{"A55", "A55", "A55", "A55", "A76", "A76", "A76", "A76"}
+	ClusterThermalZone = map[int]string{
+		0: "littlecore-thermal",
+		4: "bigcore0-thermal",
+		6: "bigcore1-thermal",
+	}
+)
 
 type Collector struct {
 	mu sync.Mutex

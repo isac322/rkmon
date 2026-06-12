@@ -3,7 +3,7 @@ package ui
 import (
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/isac322/rkmon/internal/collect"
 )
@@ -74,7 +74,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.helpScroll = clampHelpScroll(m.helpScroll, m.helpTab, m.height)
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if m.helpMode {
 			switch msg.String() {
 			case "esc", "q", "?":
@@ -98,7 +98,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "pgup", "b", "ctrl+u":
 				m.helpScroll = clampHelpScroll(m.helpScroll-10, m.helpTab, m.height)
 				return m, nil
-			case "pgdown", "f", " ", "ctrl+d":
+			case "pgdown", "f", "space", "ctrl+d":
 				m.helpScroll = clampHelpScroll(m.helpScroll+10, m.helpTab, m.height)
 				return m, nil
 			case "home", "g":
@@ -175,7 +175,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "pgup":
 			m.mainScroll = m.clampMainScroll(m.mainScroll - 10)
 			return m, nil
-		case "pgdown", " ":
+		case "pgdown", "space":
 			m.mainScroll = m.clampMainScroll(m.mainScroll + 10)
 			return m, nil
 		case "home":
@@ -201,11 +201,16 @@ func (m Model) clampMainScroll(v int) int {
 	return clampMainScroll(v, bodyLen, m.height)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
+	var content string
 	if m.helpMode {
-		return renderHelp(m.styles, m.width, m.height, m.helpTab, m.helpScroll)
+		content = renderHelp(m.styles, m.width, m.height, m.helpTab, m.helpScroll)
+	} else {
+		content = Render(m.styles, m.snap, m.refresh, m.tick, m.width, m.height, m.tiers, m.sections, m.mainScroll)
 	}
-	return Render(m.styles, m.snap, m.refresh, m.tick, m.width, m.height, m.tiers, m.sections, m.mainScroll)
+	v := tea.NewView(content)
+	v.AltScreen = true
+	return v
 }
 
 func RenderStatic(snap *collect.Snapshot, color bool, width int, tiers [3]int8) string {
