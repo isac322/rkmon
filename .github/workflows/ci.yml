@@ -46,7 +46,7 @@ jobs:
             || (echo "::error::binary is NOT statically linked"; exit 1)
 
       - name: upload snapshot binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rkmon-snapshot-linux-arm64
           path: dist/rkmon_linux_*_v*/rkmon
