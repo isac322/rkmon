@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          check-latest: true
+
+      - name: Verify go test before release
+        run: go test ./...
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify static-linked binary in release artifacts
+        run: |
+          set -e
+          archive=$(ls dist/rkmon_*_linux_arm64.tar.gz)
+          mkdir -p /tmp/extract
+          tar -xzf "$archive" -C /tmp/extract
+          file /tmp/extract/rkmon
+          file /tmp/extract/rkmon | grep -q "statically linked" \
+            || (echo "::error::released binary is NOT statically linked"; exit 1)
+          echo "OK static binary: $archive"
