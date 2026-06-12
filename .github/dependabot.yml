@@ -1,0 +1,71 @@
+version: 2
+updates:
+  # Go modules
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: deps
+      include: scope
+    labels:
+      - dependencies
+      - go
+    groups:
+      charmbracelet:
+        patterns:
+          - "github.com/charmbracelet/*"
+          - "charm.land/*"
+      golang-x:
+        patterns:
+          - "golang.org/x/*"
+      go-runtime:
+        patterns:
+          - "github.com/mattn/*"
+          - "github.com/rivo/*"
+          - "github.com/lucasb-eyer/*"
+          - "github.com/muesli/*"
+          - "github.com/aymanbagabas/*"
+          - "github.com/erikgeiser/*"
+          - "github.com/xo/*"
+
+  # GitHub Actions workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+      include: scope
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
+      ecosystem:
+        patterns:
+          - "goreleaser/*"
+          - "golangci/*"
+
+  # Git submodules (no-op today, future-proof for any vendored deps)
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: deps
+      include: scope
+    labels:
+      - dependencies
+      - submodule

@@ -1,0 +1,27 @@
+version: "2"
+
+run:
+  timeout: 3m
+  go: "1.26"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment   # cosmetic; reordering hurts readability for our small structs
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt

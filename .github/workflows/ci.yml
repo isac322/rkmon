@@ -19,54 +19,51 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.24"]
+        go: ["1.26"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
 
-      - name: gofmt
-        run: |
-          out=$(gofmt -l .)
-          if [ -n "$out" ]; then
-            echo "::error::gofmt found unformatted files:"
-            echo "$out"
-            exit 1
-          fi
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: go test
+      - name: go test (-race)
         run: go test -race -count=1 ./...
 
-      - name: cross-compile linux/arm64 static binary
-        env:
-          GOOS: linux
-          GOARCH: arm64
-          CGO_ENABLED: 0
+      - name: cross-compile linux/arm64 static binary (snapshot)
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: build --clean --snapshot
+
+      - name: verify static linkage
         run: |
-          go build -trimpath -tags 'netgo,osusergo' \
-            -ldflags "-s -w -extldflags '-static' -X main.Version=ci -X main.GitSHA=${GITHUB_SHA::7}" \
-            -o /tmp/rkmon ./cmd/rkmon
-          file /tmp/rkmon
-          file /tmp/rkmon | grep -q "statically linked" || (echo "::error::binary is NOT statically linked"; exit 1)
+          bin=$(find dist -type f -name rkmon | head -1)
+          file "$bin"
+          file "$bin" | grep -q "statically linked" \
+            || (echo "::error::binary is NOT statically linked"; exit 1)
+
+      - name: upload snapshot binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: rkmon-snapshot-linux-arm64
+          path: dist/rkmon_linux_*_v*/rkmon
+          if-no-files-found: error
+          retention-days: 7
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: "1.24"
+          go-version: "1.26"
           check-latest: true
 
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
-          args: --timeout=3m
+          version: v2.12
