@@ -22,7 +22,7 @@ type Snapshot struct {
 	Fan         FanInfo
 	Governor    GovernorInfo
 	PCIe        []PCIeDev
-	CtxSwitch   uint64 // per-second delta
+	CtxSwitch   uint64   // per-second delta
 	IRQPerCPU   []uint64 // per-second delta, len = NumCPU
 	CollectedAt time.Time
 }
@@ -51,12 +51,12 @@ type MemInfo struct {
 
 // Devfreq represents a generic devfreq node (GPU/NPU/DDR controller).
 type Devfreq struct {
-	Name     string
-	PctUsed  int    // 0..100; may be sticky for rknpu_ondemand
-	FreqHz   uint64
-	MinHz    uint64
-	MaxHz    uint64
-	Stale    bool // true when value is known to be unreliable (e.g. NPU sticky)
+	Name        string
+	PctUsed     int // 0..100; may be sticky for rknpu_ondemand
+	FreqHz      uint64
+	MinHz       uint64
+	MaxHz       uint64
+	Stale       bool   // true when value is known to be unreliable (e.g. NPU sticky)
 	ThermalZone string // optional thermal zone type to look up
 }
 
@@ -130,9 +130,9 @@ type FanInfo struct {
 }
 
 type GovernorInfo struct {
-	A55     string
-	A76_0   string
-	A76_1   string
+	A55   string
+	A76_0 string
+	A76_1 string
 }
 
 type PCIeDev struct {
