@@ -8,7 +8,7 @@ Like `htop`, but for the **GPU, NPU, VPU, RGA, DDR controller, and thermal zones
 
 [![Release](https://img.shields.io/github/v/release/isac322/rkmon?style=flat-square&color=blue)](https://github.com/isac322/rkmon/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/isac322/rkmon/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/isac322/rkmon/actions/workflows/ci.yml)
-[![Go Report](https://img.shields.io/badge/go-1.22%2B-00ADD8?style=flat-square&logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/go-1.24%2B-00ADD8?style=flat-square&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/github/license/isac322/rkmon?style=flat-square&color=green)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%2Farm64-lightgrey?style=flat-square)](https://github.com/isac322/rkmon/releases/latest)
 
@@ -58,7 +58,7 @@ make build               # cross‑compiles to build/rkmon (linux/arm64, static)
 make deploy              # scp + install to ~/.local/bin/rkmon on $TARGET
 ```
 
-Build requirements: Go 1.22+. No CGO.
+Build requirements: Go 1.24+. No CGO.
 
 ## Usage
 
