@@ -1,0 +1,16 @@
+# Go
+/build/
+/dist/
+*.test
+*.out
+*.prof
+coverage.txt
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Local secrets / config
+*.local
+.env
