@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/term"
 
 	"github.com/isac322/rkmon/internal/collect"
@@ -59,7 +59,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "cpuprofile start: %v\n", err)
 			os.Exit(1)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		defer pprof.StopCPUProfile()
 	}
 	if *memProfile != "" {
@@ -69,7 +69,7 @@ func main() {
 				fmt.Fprintf(os.Stderr, "memprofile open: %v\n", err)
 				return
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 			if err := pprof.WriteHeapProfile(f); err != nil {
 				fmt.Fprintf(os.Stderr, "memprofile write: %v\n", err)
 			}
@@ -104,7 +104,7 @@ func main() {
 	}
 
 	model := ui.NewModelWithTiers(c, *refresh, !*noColor, tiers)
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	p := tea.NewProgram(model)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

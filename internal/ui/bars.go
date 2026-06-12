@@ -4,8 +4,10 @@ import (
 	"strings"
 )
 
-var fullBlock24 = strings.Repeat("█", 24)
-var dashBlock24 = strings.Repeat("─", 24)
+var (
+	fullBlock24 = strings.Repeat("█", 24)
+	dashBlock24 = strings.Repeat("─", 24)
+)
 
 func renderBar(s Styles, pct float64, width int) string {
 	if width <= 0 {

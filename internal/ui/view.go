@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/isac322/rkmon/internal/collect"
@@ -453,7 +453,8 @@ func renderMem(s Styles, l Layout, snap *collect.Snapshot) []string {
 	if m.TotalKiB > 0 {
 		pct = int(used * 100 / m.TotalKiB)
 	}
-	memLine := fmt.Sprintf("%s%s %s %s / %s",
+	memLine := fmt.Sprintf(
+		"%s%s %s %s / %s",
 		padVisible(s.label("MEM"), l.LabelW),
 		renderBar(s, float64(pct), l.BarW),
 		pctText(s, pct),
@@ -472,7 +473,8 @@ func renderMem(s Styles, l Layout, snap *collect.Snapshot) []string {
 	if m.SwapTotalKiB > 0 {
 		spct = int(sused * 100 / m.SwapTotalKiB)
 	}
-	swapLine := fmt.Sprintf("%s%s %s %s / %s",
+	swapLine := fmt.Sprintf(
+		"%s%s %s %s / %s",
 		padVisible(s.label("SWAP"), l.LabelW),
 		renderBar(s, float64(spct), l.BarW),
 		pctText(s, spct),
