@@ -45,11 +45,11 @@ jobs:
             || (echo "::error::would-be-released binary is NOT statically linked"; exit 1)
           echo "OK static binary verified: $archive"
 
-      - name: goreleaser publish (uses pre-built dist/)
+      - name: goreleaser release (publish)
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --skip=build
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
