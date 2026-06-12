@@ -8,7 +8,7 @@ Like `htop`, but for the **GPU, NPU, VPU, RGA, DDR controller, and thermal zones
 
 [![Release](https://img.shields.io/github/v/release/isac322/rkmon?style=flat-square&color=blue)](https://github.com/isac322/rkmon/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/isac322/rkmon/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/isac322/rkmon/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/go-1.24%2B-00ADD8?style=flat-square&logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/go-1.26%2B-00ADD8?style=flat-square&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/github/license/isac322/rkmon?style=flat-square&color=green)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%2Farm64-lightgrey?style=flat-square)](https://github.com/isac322/rkmon/releases/latest)
 
@@ -40,15 +40,15 @@ The RK3588 is one of the most capable ARM SoCs ever shipped to hobbyists: an 8â€
 ### Pre-built binary (recommended)
 
 ```sh
-# Install rkmon v0.2.0 for linux/arm64
-VERSION=v0.2.0
+# Install rkmon v0.3.0 for linux/arm64
+VERSION=v0.3.0
 curl -sSL "https://github.com/isac322/rkmon/releases/download/${VERSION}/rkmon_${VERSION#v}_linux_arm64.tar.gz" \
   | tar -xz -C /tmp rkmon
 sudo install -m 0755 /tmp/rkmon /usr/local/bin/rkmon
 rkmon --version
 ```
 
-Replace `v0.2.0` with the latest tag from the [Releases page](https://github.com/isac322/rkmon/releases). Each release also ships a `checksums.txt` you can verify with `sha256sum -c`.
+Replace `v0.3.0` with the latest tag from the [Releases page](https://github.com/isac322/rkmon/releases). Each release also ships a `checksums.txt` you can verify with `sha256sum -c`.
 
 ### From source
 
@@ -59,7 +59,7 @@ make build               # crossâ€‘compiles to build/rkmon (linux/arm64, static)
 make deploy              # scp + install to ~/.local/bin/rkmon on $TARGET
 ```
 
-Build requirements: Go 1.24+. No CGO.
+Build requirements: Go 1.26+. No CGO.
 
 ## Usage
 
