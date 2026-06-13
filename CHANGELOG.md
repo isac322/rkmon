@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-13
+
 ### Performance
 
 - **Snapshot collector: -78% time, -86% memory, -62% allocations** on RK3588
@@ -18,8 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     at first scan; per-tick reads now touch only the changing `cur_state`.
   - All hot /proc and /sys nodes now read via a persistent file-descriptor
     cache + `unix.Pread`, replacing per-call `os.Open`+`Read`+`Close`.
-    Validated on rock5bp that every per-tick path returns fresh content via
-    persistent `pread` (proc + sysfs regenerate on read-from-offset-0).
+    Validated on rock5bp that persistent `pread` matches `os.ReadFile`
+    semantics on every per-tick path: dynamic nodes (CPU stat, meminfo,
+    diskstats, thermal/temp, …) update between reads as expected, and
+    known idle/sticky nodes (rknpu_ondemand load, idle mpp_service) remain
+    identical — same behaviour the previous `os.ReadFile` path showed.
   - The `golang.org/x/sys/unix` package is promoted from indirect to direct.
   - Live profile: `Syscall6` flat dropped from 26.7% to 18.0%.
   - Sustained CPU on rock5bp (same charm v2 baseline, 3-trial median):
@@ -60,5 +65,6 @@ Initial public release.
 - Go floor: 1.26.
 - Verified end-to-end on a Radxa Rock 5B+ (RK3588, kernel 6.1.84 BSP).
 
-[Unreleased]: https://github.com/isac322/rkmon/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/isac322/rkmon/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/isac322/rkmon/releases/tag/v0.3.1
 [0.3.0]: https://github.com/isac322/rkmon/releases/tag/v0.3.0

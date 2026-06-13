@@ -18,7 +18,7 @@ import (
 
 // Version and GitSHA are set via -ldflags at build time.
 var (
-	Version = "0.3.0"
+	Version = "0.3.1"
 	GitSHA  = "dev"
 )
 
