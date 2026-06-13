@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 BIN      := rkmon
 PKG      := github.com/isac322/rkmon
-VERSION  := 0.2.0
+VERSION  := $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.3.0)
 GIT_SHA  := $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 LDFLAGS  := -s -w \
             -X 'main.Version=$(VERSION)' \

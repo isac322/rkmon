@@ -75,4 +75,8 @@ release:
     RK3588 hardware monitor TUI. See the [README](https://github.com/isac322/rkmon#readme) for install and usage.
   footer: |
     ---
-    **Full Changelog**: https://github.com/isac322/rkmon/compare/{{.PreviousTag}}...{{.Tag}}
+    {{- if gt (len .PreviousTag) 0 }}
+    **Full Changelog**: https://github.com/isac322/rkmon/compare/{{ .PreviousTag }}...{{ .Tag }}
+    {{- else }}
+    First public release. See the [README](https://github.com/isac322/rkmon#readme) for everything {{ .Tag }} ships with.
+    {{- end }}

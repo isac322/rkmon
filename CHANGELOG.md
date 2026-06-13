@@ -9,29 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.0] - 2026-06-12
 
-Stack refresh and CI/CD modernization.
-
-### Changed
-
-- **bubbletea v1 → v2** (`charm.land/bubbletea/v2 v2.0.7`) — migrated to the declarative `View() tea.View` API; `AltScreen` is now a field on the returned view instead of a `tea.WithAltScreen()` program option.
-- **lipgloss v1 → v2** (`charm.land/lipgloss/v2 v2.0.4`) — pure-render mode, automatic color downsampling driven by Bubble Tea.
-- **Go floor 1.24 → 1.26**, plus `go get -u ./... && go mod tidy` for every transitive dependency.
-- **GitHub Actions pins** — `actions/checkout v4→v6`, `actions/setup-go v5→v6`, `goreleaser/goreleaser-action v6→v7`, `golangci/golangci-lint-action v6→v9`, `actions/upload-artifact v4→v7`.
-- **CI workflow** — dropped standalone `gofmt`/`go vet` bash steps; both run inside `golangci-lint v2.12` via the new `.golangci.yml` config. Replaced the inline `go build … | grep statically` bash with `goreleaser build --snapshot` and `actions/upload-artifact@v7` so every CI run publishes the linux/arm64 binary for inspection.
-- **Release workflow** — split into `goreleaser release --skip=publish` → verify static linkage → `goreleaser release --skip=build` so the static-link check now happens **before** publication, not after.
-
-### Added
-
-- **`.github/dependabot.yml`** — weekly grouped updates for `gomod` (charm.land/*, golang.org/x/*, go-runtime) and `github-actions` (actions/*, ecosystem), plus monthly no-op coverage for `gitsubmodule`. All groups emit Conventional Commits with scoped labels.
-- **`.golangci.yml`** — explicit v2 config; default `none` plus stable allow-list (`errcheck`, `govet` (enable-all minus fieldalignment), `ineffassign`, `staticcheck`, `unused`, `misspell`, `unconvert`) and `gofmt` + `gofumpt` as formatters.
-
-### Security
-
-- **Redacted a private SSH hostname** from the Makefile and `docs/demo.tape`; rewrote the entire git history with `git filter-repo --replace-text` so no historical commit contains it.
-- **Rewrote author/committer email** across history from a personal address to the GitHub noreply alias (`isac322@users.noreply.github.com`) via `--mailmap`, so the public commit log no longer leaks the maintainer's primary mailbox.
-
-## [0.2.0] - 2026-06-12
-
 Initial public release.
 
 ### Added
@@ -45,7 +22,16 @@ Initial public release.
 - **Scrollable main view** — `↑ ↓ j pgup pgdn space home end`; top/bottom border and 2-line footer pinned.
 - **Multi-tab help** (`?`): Keybinds · Metrics · Stress tests (with concrete stress-ng/ffmpeg/iperf3/fio recipes per metric).
 - **CLI** — `--once`, `--width`, `--refresh`, `--tiers`, `--no-color`, `--version`, `--help`.
+- **Static linux/arm64 binary** — single ELF, `CGO_ENABLED=0`, `-trimpath -tags netgo,osusergo`, `-extldflags '-static' -s -w`. No shared library footprint, no Python/Node deps.
+- **CI/CD** — GitHub Actions (`actions/checkout@v6`, `setup-go@v6`, `goreleaser-action@v7`, `golangci-lint-action@v9`, `upload-artifact@v7`). Static-link verification happens BEFORE the GoReleaser publish step so a non-static binary cannot reach a public release.
+- **`.github/dependabot.yml`** — weekly grouped updates for `gomod` (`charm.land/*`, `golang.org/x/*`, `go-runtime`) and `github-actions` (`actions/*`, ecosystem), plus monthly no-op coverage for `gitsubmodule`. All groups emit Conventional Commits with scoped labels.
+- **`.golangci.yml`** (v2 schema) — `errcheck`, `govet` (enable-all minus `fieldalignment`), `ineffassign`, `staticcheck`, `unused`, `misspell`, `unconvert`; `gofmt` + `gofumpt` as formatters. Replaces ad-hoc `gofmt`/`go vet` bash in CI.
+
+### Notes
+
+- Built on Charm `bubbletea v2` (`charm.land/bubbletea/v2 v2.0.7`) and `lipgloss v2` (`charm.land/lipgloss/v2 v2.0.4`), the declarative-View / pure-render generation of the stack.
+- Go floor: 1.26.
+- Verified end-to-end on a Radxa Rock 5B+ (RK3588, kernel 6.1.84 BSP).
 
 [Unreleased]: https://github.com/isac322/rkmon/compare/v0.3.0...HEAD
 [0.3.0]: https://github.com/isac322/rkmon/releases/tag/v0.3.0
-[0.2.0]: https://github.com/isac322/rkmon/releases/tag/v0.2.0
