@@ -14,3 +14,5 @@ coverage.txt
 # Local secrets / config
 *.local
 .env
+scripts/
+tmp/
