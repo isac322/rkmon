@@ -78,9 +78,9 @@ func main() {
 
 	c := collect.New()
 
-	tiers, err := ui.ParseTiersFlag(*tiersFlag)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "invalid --tiers %q: %v\n", *tiersFlag, err)
+	tiers, parseErr := ui.ParseTiersFlag(*tiersFlag)
+	if parseErr != nil {
+		fmt.Fprintf(os.Stderr, "invalid --tiers %q: %v\n", *tiersFlag, parseErr)
 		os.Exit(2)
 	}
 	if *once {
@@ -105,10 +105,10 @@ func main() {
 
 	model := ui.NewModelWithTiers(c, *refresh, !*noColor, tiers)
 	p := tea.NewProgram(model)
-	_, err = p.Run()
+	_, runErr := p.Run()
 	c.Close()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if runErr != nil {
+		fmt.Fprintln(os.Stderr, runErr)
 		os.Exit(1)
 	}
 }

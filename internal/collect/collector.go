@@ -62,7 +62,7 @@ type Collector struct {
 	mppIntervalChecked  bool
 
 	// cooling_device static data scanned once: type, max_state, path-to-cur_state.
-	cachedCooling       []coolingStatic
+	cachedCooling        []coolingStatic
 	cachedCoolingScanned bool
 
 	// Per-tick raw content of files read by multiple sub-collectors. Set at the
@@ -790,7 +790,7 @@ func (c *Collector) readFileBuf(path string) (string, error) {
 	buf := c.readBuf[:cap(c.readBuf)]
 	n, err := unix.Pread(fd, buf, 0)
 	if err != nil {
-		unix.Close(fd)
+		_ = unix.Close(fd)
 		delete(c.persistentFDs, path)
 		if cached {
 			return c.readFileBuf(path)
@@ -802,7 +802,7 @@ func (c *Collector) readFileBuf(path string) (string, error) {
 		c.readBuf = buf
 		n, err = unix.Pread(fd, buf, 0)
 		if err != nil {
-			unix.Close(fd)
+			_ = unix.Close(fd)
 			delete(c.persistentFDs, path)
 			return "", err
 		}
@@ -814,7 +814,7 @@ func (c *Collector) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, fd := range c.persistentFDs {
-		unix.Close(fd)
+		_ = unix.Close(fd)
 	}
 	c.persistentFDs = nil
 }

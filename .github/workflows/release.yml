@@ -33,6 +33,8 @@ jobs:
           distribution: goreleaser
           version: "~> v2"
           args: release --clean --skip=publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify static-linked binary BEFORE publish
         run: |
