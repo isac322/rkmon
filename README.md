@@ -184,7 +184,7 @@ Standard Go project layout. `make test vet lint` should pass before sending a PR
 
 ## License
 
-[MIT](LICENSE) © 2026 isac322
+[MIT](LICENSE) © 2026 [isac322](https://github.com/isac322)
 
 ---
 
