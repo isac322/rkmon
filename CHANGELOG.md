@@ -9,18 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
-- **Snapshot collector: -76% time, -87% memory, -62% allocations** on RK3588.
+- **Snapshot collector: -78% time, -86% memory, -62% allocations** on RK3588
+  (apples-to-apples vs prior commit on the same `charm.land/bubbletea v2`
+  stack).
   - Eliminated duplicate `/proc/stat` reads (readCPU + readCtxIRQ shared) and
     duplicate `/proc/meminfo` reads (readMem + readCMA shared).
   - Cached `cooling_device` type, `max_state`, and per-cooler `cur_state` path
     at first scan; per-tick reads now touch only the changing `cur_state`.
   - All hot /proc and /sys nodes now read via a persistent file-descriptor
-    cache + `unix.Pread`, replacing per-call `os.Open`+`Read`+`Close`. The
-    `golang.org/x/sys/unix` package is promoted from indirect to direct.
-  - Live profile: `Syscall6` flat dropped from 26.7% to 18.0%; sustained CPU
-    at `--refresh=500ms` dropped from 3.5% to 2.8% on Rock 5B+.
-  - `BenchmarkSnapshot` baseline 3.55 ms/op (512 KB / 793 allocs) → 0.86 ms/op
-    (69 KB / 302 allocs).
+    cache + `unix.Pread`, replacing per-call `os.Open`+`Read`+`Close`.
+    Validated on rock5bp that every per-tick path returns fresh content via
+    persistent `pread` (proc + sysfs regenerate on read-from-offset-0).
+  - The `golang.org/x/sys/unix` package is promoted from indirect to direct.
+  - Live profile: `Syscall6` flat dropped from 26.7% to 18.0%.
+  - Sustained CPU on rock5bp (same charm v2 baseline, 3-trial median):
+    `--refresh=500ms`: 3.9% → 2.9%  (-26%)
+    `--refresh=1s`:    2.4% → 1.8%  (-25%)
+  - `BenchmarkSnapshot`: 3.58 ms/op (511 KB / 792 allocs) → 0.78 ms/op
+    (69 KB / 301 allocs).
+
+### Changed
+
+- New exported `(*Collector).Close()` releases the persistent fd cache on UI
+  shutdown; `cmd/rkmon` calls it after the bubbletea program returns. The
+  micro-benchmark uses `b.Cleanup` to release fds at the end of the suite.
 
 ## [0.3.0] - 2026-06-12
 

@@ -802,13 +802,17 @@ func (c *Collector) readFileBuf(path string) (string, error) {
 		c.readBuf = buf
 		n, err = unix.Pread(fd, buf, 0)
 		if err != nil {
+			unix.Close(fd)
+			delete(c.persistentFDs, path)
 			return "", err
 		}
 	}
 	return string(buf[:n]), nil
 }
 
-func (c *Collector) closePersistentFDs() {
+func (c *Collector) Close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	for _, fd := range c.persistentFDs {
 		unix.Close(fd)
 	}

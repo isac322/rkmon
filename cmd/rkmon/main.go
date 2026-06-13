@@ -105,7 +105,9 @@ func main() {
 
 	model := ui.NewModelWithTiers(c, *refresh, !*noColor, tiers)
 	p := tea.NewProgram(model)
-	if _, err := p.Run(); err != nil {
+	_, err = p.Run()
+	c.Close()
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

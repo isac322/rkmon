@@ -7,7 +7,7 @@ import (
 
 func BenchmarkSnapshot(b *testing.B) {
 	c := New()
-	// warm up: prev-snapshot deltas
+	b.Cleanup(c.Close)
 	if _, err := c.Snapshot(); err != nil {
 		b.Fatal(err)
 	}
