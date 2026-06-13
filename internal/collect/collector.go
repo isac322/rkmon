@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 // Hardware paths on RK3588 BSP kernel.
@@ -58,6 +60,31 @@ type Collector struct {
 	cachedPCIe          []PCIeDev
 	cachedFanHwmon      string
 	mppIntervalChecked  bool
+
+	// cooling_device static data scanned once: type, max_state, path-to-cur_state.
+	cachedCooling       []coolingStatic
+	cachedCoolingScanned bool
+
+	// Per-tick raw content of files read by multiple sub-collectors. Set at the
+	// start of Snapshot() so duplicate sysreads are eliminated. Cleared at end.
+	tickStat    string
+	tickMeminfo string
+
+	// Reusable scratch buffer for small /proc and /sys reads to avoid per-call
+	// allocation. Snapshot() holds c.mu so single-buffer reuse is safe.
+	readBuf []byte
+
+	// Persistent file-descriptor cache for /proc and /sys nodes that regenerate
+	// content per-read (kernel-side text files). Eliminates open/close syscall
+	// pair per call: only one pread() per read. Lazily populated on first call
+	// per path; invalid fds are closed and dropped so the next call re-opens.
+	persistentFDs map[string]int
+}
+
+type coolingStatic struct {
+	typ          string
+	max          int
+	curStatePath string
 }
 
 type freqLimits struct {
@@ -88,6 +115,9 @@ func (c *Collector) Snapshot() (*Snapshot, error) {
 		Thermal:     make(map[string]int),
 	}
 
+	c.tickStat, _ = c.readFileBuf("/proc/stat")
+	c.tickMeminfo, _ = c.readFileBuf("/proc/meminfo")
+
 	c.readHost(snap)
 	c.readCPU(snap)
 	c.readMem(snap)
@@ -106,6 +136,8 @@ func (c *Collector) Snapshot() (*Snapshot, error) {
 	c.readPCIe(snap)
 	c.readCtxIRQ(snap, now)
 
+	c.tickStat = ""
+	c.tickMeminfo = ""
 	c.prevSnapshot = snap
 	return snap, nil
 }
@@ -121,8 +153,8 @@ func (c *Collector) readHost(snap *Snapshot) {
 	hostname := cachedHostname
 	kernel := unameRelease()
 
-	uptimeRaw, _ := readFile("/proc/uptime")
-	loadRaw, _ := readFile("/proc/loadavg")
+	uptimeRaw, _ := c.readFileBuf("/proc/uptime")
+	loadRaw, _ := c.readFileBuf("/proc/loadavg")
 
 	avg, running, total := ParseLoadavg(loadRaw)
 	snap.Host = HostInfo{
@@ -148,8 +180,8 @@ func unameRelease() string { return cachedKernel }
 // --- CPU --------------------------------------------------------------------
 
 func (c *Collector) readCPU(snap *Snapshot) {
-	raw, err := readFile("/proc/stat")
-	if err != nil {
+	raw := c.tickStat
+	if raw == "" {
 		return
 	}
 	cur := make(map[string]CPUTimes)
@@ -173,16 +205,16 @@ func (c *Collector) readCPU(snap *Snapshot) {
 				core.PctUsed = CPUPctFromDelta(pt, ct)
 			}
 		}
-		core.FreqMHz = readCPUFreqMHz(i)
+		core.FreqMHz = c.readCPUFreqMHz(i)
 		cores[i] = core
 	}
 	snap.CPU = cores
 	c.prevCPU = cur
 }
 
-func readCPUFreqMHz(idx int) int {
+func (c *Collector) readCPUFreqMHz(idx int) int {
 	path := "/sys/devices/system/cpu/cpu" + strconv.Itoa(idx) + "/cpufreq/scaling_cur_freq"
-	s, err := readFile(path)
+	s, err := c.readFileBuf(path)
 	if err != nil {
 		return 0
 	}
@@ -193,11 +225,10 @@ func readCPUFreqMHz(idx int) int {
 // --- Memory -----------------------------------------------------------------
 
 func (c *Collector) readMem(snap *Snapshot) {
-	raw, err := readFile("/proc/meminfo")
-	if err != nil {
+	if c.tickMeminfo == "" {
 		return
 	}
-	snap.Mem = ParseMeminfo(raw)
+	snap.Mem = ParseMeminfo(c.tickMeminfo)
 }
 
 // --- Devfreq nodes ----------------------------------------------------------
@@ -222,20 +253,20 @@ func (c *Collector) readDevfreqs(snap *Snapshot) {
 
 func (c *Collector) readDevfreq(base, name, thermalZone string) Devfreq {
 	d := Devfreq{Name: name, ThermalZone: thermalZone}
-	if raw, err := readFile(filepath.Join(base, "load")); err == nil {
+	if raw, err := c.readFileBuf(filepath.Join(base, "load")); err == nil {
 		d.PctUsed, d.FreqHz = ParseDevfreqLoad(raw)
 	}
 	if d.FreqHz == 0 {
-		if raw, err := readFile(filepath.Join(base, "cur_freq")); err == nil {
+		if raw, err := c.readFileBuf(filepath.Join(base, "cur_freq")); err == nil {
 			d.FreqHz, _ = strconv.ParseUint(strings.TrimSpace(raw), 10, 64)
 		}
 	}
 	limits, cached := c.cachedDevfreqLimits[base]
 	if !cached {
-		if raw, err := readFile(filepath.Join(base, "min_freq")); err == nil {
+		if raw, err := c.readFileBuf(filepath.Join(base, "min_freq")); err == nil {
 			limits.min, _ = strconv.ParseUint(strings.TrimSpace(raw), 10, 64)
 		}
-		if raw, err := readFile(filepath.Join(base, "max_freq")); err == nil {
+		if raw, err := c.readFileBuf(filepath.Join(base, "max_freq")); err == nil {
 			limits.max, _ = strconv.ParseUint(strings.TrimSpace(raw), 10, 64)
 		}
 		if limits.min > 0 || limits.max > 0 {
@@ -249,7 +280,7 @@ func (c *Collector) readDevfreq(base, name, thermalZone string) Devfreq {
 // --- NPU per-core (root only) ----------------------------------------------
 
 func (c *Collector) readNPUCores(snap *Snapshot) {
-	raw, err := readFile(RKNPULoad)
+	raw, err := c.readFileBuf(RKNPULoad)
 	if err != nil {
 		snap.NPUCores.Available = false
 		return
@@ -275,7 +306,7 @@ func (c *Collector) readNPUCores(snap *Snapshot) {
 func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 	if !c.mppIntervalChecked {
 		c.mppIntervalChecked = true
-		if raw, err := readFile(MPPInterval); err == nil {
+		if raw, err := c.readFileBuf(MPPInterval); err == nil {
 			if iv, _ := strconv.Atoi(strings.TrimSpace(raw)); iv == 0 {
 				_ = os.WriteFile(MPPInterval, []byte("1000\n"), 0o644)
 			}
@@ -283,12 +314,12 @@ func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 	}
 
 	// Active session count is sudoless.
-	if raw, err := readFile(MPPSessions); err == nil {
+	if raw, err := c.readFileBuf(MPPSessions); err == nil {
 		snap.VPU.Sessions = ParseMPPSessions(raw)
 	}
 
 	// Prefer real %-load from /proc/mpp_service/load (root + interval set).
-	if raw, err := readFile(MPPLoad); err == nil {
+	if raw, err := c.readFileBuf(MPPLoad); err == nil {
 		entries := ParseMPPLoad(raw)
 		if len(entries) > 0 {
 			snap.VPU.Mode = "load"
@@ -312,7 +343,7 @@ func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 	curCounts := map[string]uint64{}
 	for _, kind := range []string{"rkvdec-core0", "rkvdec-core1", "rkvenc-core0", "rkvenc-core1"} {
 		path := "/proc/mpp_service/" + kind + "/task_count"
-		if raw, err := readFile(path); err == nil {
+		if raw, err := c.readFileBuf(path); err == nil {
 			v, _ := strconv.ParseUint(strings.TrimSpace(raw), 10, 64)
 			curCounts[kind] = v
 		}
@@ -347,7 +378,7 @@ func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 }
 
 func (c *Collector) readRGA(snap *Snapshot) {
-	raw, err := readFile(RGALoad)
+	raw, err := c.readFileBuf(RGALoad)
 	if err != nil {
 		return
 	}
@@ -364,7 +395,7 @@ func (c *Collector) readISP(snap *Snapshot) {
 	} {
 		matches, _ := filepath.Glob(glob)
 		for _, p := range matches {
-			raw, err := readFile(p)
+			raw, err := c.readFileBuf(p)
 			if err != nil {
 				continue
 			}
@@ -397,7 +428,7 @@ func (c *Collector) readThermal(snap *Snapshot) {
 				continue
 			}
 			base := filepath.Join("/sys/class/thermal", name)
-			typ, err := readFile(filepath.Join(base, "type"))
+			typ, err := c.readFileBuf(filepath.Join(base, "type"))
 			if err != nil {
 				continue
 			}
@@ -405,7 +436,7 @@ func (c *Collector) readThermal(snap *Snapshot) {
 		}
 	}
 	for base, typ := range c.cachedThermalTypes {
-		raw, err := readFile(filepath.Join(base, "temp"))
+		raw, err := c.readFileBuf(filepath.Join(base, "temp"))
 		if err != nil {
 			continue
 		}
@@ -418,7 +449,7 @@ func (c *Collector) readThermal(snap *Snapshot) {
 // --- Disk I/O --------------------------------------------------------------
 
 func (c *Collector) readDisks(snap *Snapshot, now time.Time) {
-	raw, err := readFile("/proc/diskstats")
+	raw, err := c.readFileBuf("/proc/diskstats")
 	if err != nil {
 		return
 	}
@@ -517,7 +548,7 @@ func isPhysIface(name string) bool {
 }
 
 func (c *Collector) readNets(snap *Snapshot, now time.Time) {
-	raw, err := readFile("/proc/net/dev")
+	raw, err := c.readFileBuf("/proc/net/dev")
 	if err != nil {
 		return
 	}
@@ -563,40 +594,52 @@ func (c *Collector) readNets(snap *Snapshot, now time.Time) {
 // --- Throttle / cooling devices --------------------------------------------
 
 func (c *Collector) readThrottle(snap *Snapshot) {
-	entries, err := os.ReadDir("/sys/class/thermal")
-	if err != nil {
+	if !c.cachedCoolingScanned {
+		c.cachedCoolingScanned = true
+		entries, err := os.ReadDir("/sys/class/thermal")
+		if err != nil {
+			return
+		}
+		for _, e := range entries {
+			name := e.Name()
+			if !strings.HasPrefix(name, "cooling_device") {
+				continue
+			}
+			base := filepath.Join("/sys/class/thermal", name)
+			typ, _ := c.readFileBuf(filepath.Join(base, "type"))
+			typStr := strings.TrimSpace(typ)
+			if strings.HasPrefix(typStr, "pwm-fan") || strings.HasPrefix(typStr, "pwmfan") {
+				continue
+			}
+			maxS, _ := c.readFileBuf(filepath.Join(base, "max_state"))
+			mx, _ := strconv.Atoi(strings.TrimSpace(maxS))
+			c.cachedCooling = append(c.cachedCooling, coolingStatic{
+				typ:          typStr,
+				max:          mx,
+				curStatePath: filepath.Join(base, "cur_state"),
+			})
+		}
+		sort.Slice(c.cachedCooling, func(i, j int) bool { return c.cachedCooling[i].typ < c.cachedCooling[j].typ })
+	}
+	if len(c.cachedCooling) == 0 {
 		return
 	}
-	var out []CoolingDev
-	for _, e := range entries {
-		name := e.Name()
-		if !strings.HasPrefix(name, "cooling_device") {
-			continue
-		}
-		base := filepath.Join("/sys/class/thermal", name)
-		typ, _ := readFile(filepath.Join(base, "type"))
-		typStr := strings.TrimSpace(typ)
-		if strings.HasPrefix(typStr, "pwm-fan") || strings.HasPrefix(typStr, "pwmfan") {
-			continue
-		}
-		curS, _ := readFile(filepath.Join(base, "cur_state"))
-		maxS, _ := readFile(filepath.Join(base, "max_state"))
+	out := make([]CoolingDev, len(c.cachedCooling))
+	for i, cs := range c.cachedCooling {
+		curS, _ := c.readFileBuf(cs.curStatePath)
 		cur, _ := strconv.Atoi(strings.TrimSpace(curS))
-		mx, _ := strconv.Atoi(strings.TrimSpace(maxS))
-		out = append(out, CoolingDev{Type: typStr, Cur: cur, Max: mx})
+		out[i] = CoolingDev{Type: cs.typ, Cur: cur, Max: cs.max}
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Type < out[j].Type })
 	snap.Throttle = out
 }
 
 // --- CMA -------------------------------------------------------------------
 
 func (c *Collector) readCMA(snap *Snapshot) {
-	raw, err := readFile("/proc/meminfo")
-	if err != nil {
+	if c.tickMeminfo == "" {
 		return
 	}
-	snap.CMA = ParseCMA(raw)
+	snap.CMA = ParseCMA(c.tickMeminfo)
 }
 
 // --- Fan -------------------------------------------------------------------
@@ -605,7 +648,7 @@ func (c *Collector) readFan(snap *Snapshot) {
 	if c.cachedFanHwmon == "" {
 		matches, _ := filepath.Glob("/sys/class/hwmon/hwmon*/name")
 		for _, p := range matches {
-			n, _ := readFile(p)
+			n, _ := c.readFileBuf(p)
 			n = strings.TrimSpace(n)
 			if strings.HasPrefix(n, "pwmfan") || strings.HasPrefix(n, "pwm-fan") {
 				c.cachedFanHwmon = filepath.Dir(p)
@@ -616,7 +659,7 @@ func (c *Collector) readFan(snap *Snapshot) {
 			return
 		}
 	}
-	pwmRaw, err := readFile(filepath.Join(c.cachedFanHwmon, "pwm1"))
+	pwmRaw, err := c.readFileBuf(filepath.Join(c.cachedFanHwmon, "pwm1"))
 	if err != nil {
 		return
 	}
@@ -625,7 +668,7 @@ func (c *Collector) readFan(snap *Snapshot) {
 		return
 	}
 	rpm := 0
-	if rpmRaw, err := readFile(filepath.Join(c.cachedFanHwmon, "fan1_input")); err == nil {
+	if rpmRaw, err := c.readFileBuf(filepath.Join(c.cachedFanHwmon, "fan1_input")); err == nil {
 		rpm, _ = strconv.Atoi(strings.TrimSpace(rpmRaw))
 	}
 	snap.Fan = FanInfo{
@@ -640,7 +683,7 @@ func (c *Collector) readFan(snap *Snapshot) {
 
 func (c *Collector) readGovernor(snap *Snapshot) {
 	read := func(cpu int) string {
-		raw, _ := readFile("/sys/devices/system/cpu/cpu" + strconv.Itoa(cpu) + "/cpufreq/scaling_governor")
+		raw, _ := c.readFileBuf("/sys/devices/system/cpu/cpu" + strconv.Itoa(cpu) + "/cpufreq/scaling_governor")
 		return strings.TrimSpace(raw)
 	}
 	snap.Governor = GovernorInfo{
@@ -658,7 +701,7 @@ func (c *Collector) readPCIe(snap *Snapshot) {
 	matches, _ := filepath.Glob("/sys/bus/pci/devices/*")
 	var out []PCIeDev
 	for _, p := range matches {
-		spdRaw, err := readFile(filepath.Join(p, "current_link_speed"))
+		spdRaw, err := c.readFileBuf(filepath.Join(p, "current_link_speed"))
 		if err != nil {
 			continue
 		}
@@ -666,9 +709,9 @@ func (c *Collector) readPCIe(snap *Snapshot) {
 		if spd == "Unknown speed" || spd == "" {
 			continue
 		}
-		widRaw, _ := readFile(filepath.Join(p, "current_link_width"))
+		widRaw, _ := c.readFileBuf(filepath.Join(p, "current_link_width"))
 		wid, _ := strconv.Atoi(strings.TrimSpace(widRaw))
-		clsRaw, _ := readFile(filepath.Join(p, "class"))
+		clsRaw, _ := c.readFileBuf(filepath.Join(p, "class"))
 		out = append(out, PCIeDev{
 			BusID:     filepath.Base(p),
 			LinkSpeed: spd,
@@ -684,9 +727,8 @@ func (c *Collector) readPCIe(snap *Snapshot) {
 // --- Ctxsw / IRQ -----------------------------------------------------------
 
 func (c *Collector) readCtxIRQ(snap *Snapshot, now time.Time) {
-	statRaw, _ := readFile("/proc/stat")
-	curCtxt, _ := ParseStatCtxt(statRaw)
-	intRaw, _ := readFile("/proc/interrupts")
+	curCtxt, _ := ParseStatCtxt(c.tickStat)
+	intRaw, _ := c.readFileBuf("/proc/interrupts")
 	curIRQ := ParseInterruptsPerCPU(intRaw)
 
 	if c.prevCtxtAt.IsZero() {
@@ -727,4 +769,48 @@ func readFile(path string) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+func (c *Collector) readFileBuf(path string) (string, error) {
+	fd, cached := c.persistentFDs[path]
+	if !cached {
+		opened, err := unix.Open(path, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+		if err != nil {
+			return "", err
+		}
+		if c.persistentFDs == nil {
+			c.persistentFDs = make(map[string]int, 32)
+		}
+		c.persistentFDs[path] = opened
+		fd = opened
+	}
+	if cap(c.readBuf) < 4096 {
+		c.readBuf = make([]byte, 4096)
+	}
+	buf := c.readBuf[:cap(c.readBuf)]
+	n, err := unix.Pread(fd, buf, 0)
+	if err != nil {
+		unix.Close(fd)
+		delete(c.persistentFDs, path)
+		if cached {
+			return c.readFileBuf(path)
+		}
+		return "", err
+	}
+	for n == len(buf) {
+		buf = make([]byte, len(buf)*2)
+		c.readBuf = buf
+		n, err = unix.Pread(fd, buf, 0)
+		if err != nil {
+			return "", err
+		}
+	}
+	return string(buf[:n]), nil
+}
+
+func (c *Collector) closePersistentFDs() {
+	for _, fd := range c.persistentFDs {
+		unix.Close(fd)
+	}
+	c.persistentFDs = nil
 }
