@@ -7,7 +7,7 @@ require (
 	charm.land/lipgloss/v2 v2.0.4
 	github.com/charmbracelet/x/ansi v0.11.7
 	github.com/charmbracelet/x/term v0.2.2
-	github.com/lucasb-eyer/go-colorful v1.4.0
+	github.com/lucasb-eyer/go-colorful v1.4.1
 	golang.org/x/sys v0.46.0
 )
 
