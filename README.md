@@ -41,15 +41,15 @@ The RK3588 is one of the most capable ARM SoCs ever shipped to hobbyists: an 8â€
 ### Pre-built binary (recommended)
 
 ```sh
-# Install rkmon v0.3.0 for linux/arm64
-VERSION=v0.3.1
+# Install rkmon v0.4.0 for linux/arm64
+VERSION=v0.4.0
 curl -sSL "https://github.com/isac322/rkmon/releases/download/${VERSION}/rkmon_${VERSION#v}_linux_arm64.tar.gz" \
   | tar -xz -C /tmp rkmon
 sudo install -m 0755 /tmp/rkmon /usr/local/bin/rkmon
 rkmon --version
 ```
 
-Replace `v0.3.0` with the latest tag from the [Releases page](https://github.com/isac322/rkmon/releases). Each release also ships a `checksums.txt` you can verify with `sha256sum -c`.
+Replace `v0.4.0` with the latest tag from the [Releases page](https://github.com/isac322/rkmon/releases). Each release also ships a `checksums.txt` you can verify with `sha256sum -c`.
 
 ### From source
 

@@ -7,17 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-11
+
 ### Added
 
-- Reversible `p` max-performance toggle for supported CPU, GPU, NPU, and DDR governors; previous settings are restored when disabled or on exit.
+- Configured clock-rate visibility for RK3588 media accelerators: RKVDEC, RKVENC, AV1 decoder, JPEG decoder, four JPEG encoder cores, and RGA2/RGA3 cores from debugfs (`/sys/kernel/debug/clk/*/clk_rate`) (#12).
+- Section and tier visibility persistence under `$XDG_CONFIG_HOME/rkmon/config.json` (falling back to `~/.config/rkmon/config.json`) with atomic write and 0600 permissions (#12).
+- Reversible `p` max-performance toggle for supported CPU, GPU, NPU, and DDR governors; previous settings are restored when disabled or on exit (#12).
+- Panthor GPU devfreq driver support (`fb000000.gpu-panthor`) (#9).
+- Support for additional generic RK3588 GPU devfreq path (`fb000000.gpu`) with fallback discovery mechanism (#11).
+
 ### Fixed
 
-- **Stop polling `/proc/mpp_service/sessions-summary` (#13)**.
+- **Stop polling `/proc/mpp_service/sessions-summary` (#14)**.
   Rockchip's BSP MPP driver races session teardown against
   `mpp_show_session_summary`: `vepu_dump_session` can `down_read` a NULL
   `rw_semaphore` and Oops. VPU load% still comes from
   `/proc/mpp_service/load`; sudoless tasks/s still comes from per-engine
   `task_count`.
+
+### Changed
+
+- Upgrade toolchain to Go 1.27 and update dependencies including `golangci-lint` to v2.13.2 (#15).
+- Simplify CI test job name to avoid workflow configuration churn on Go upgrades (#16).
 
 ## [0.3.1] - 2026-06-13
 
@@ -77,6 +89,7 @@ Initial public release.
 - Go floor: 1.26.
 - Verified end-to-end on a Radxa Rock 5B+ (RK3588, kernel 6.1.84 BSP).
 
-[Unreleased]: https://github.com/isac322/rkmon/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/isac322/rkmon/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/isac322/rkmon/releases/tag/v0.4.0
 [0.3.1]: https://github.com/isac322/rkmon/releases/tag/v0.3.1
 [0.3.0]: https://github.com/isac322/rkmon/releases/tag/v0.3.0
