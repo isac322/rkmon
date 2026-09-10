@@ -21,7 +21,7 @@ var helpTabs = []helpTab{
   m     Memory (MEM / SWAP / DDR ctrl)
   g     GPU (Mali-G610)
   n     NPU (RKNPU)
-	v     MPP Load (VPU codecs)
+  v     VPU (mpp_service)
   a     RGA (2D accel)
         Footer shows: [X]NAME:on|off
 
@@ -34,12 +34,12 @@ Tier toggles  (binary on/off, shown after core sections on screen)
         Initial state is "auto" (height-based) until first key press.
         Note: at width >= 150, PCIe shows in the right column always.
 
-	Visibility choices persist in ~/.config/rkmon/config.json.
-	When run with sudo, this is root's config home.
+        Visibility choices persist in ~/.config/rkmon/config.json.
+        When run with sudo, this is root's config home.
 
 Controls
   q / ctrl+c     Quit
-	  p              Toggle max-performance governors (sudo; restored on exit)
+  p              Toggle max-performance governors (sudo; restored on exit)
   + / =          Refresh rate -100ms (faster)
   - / _          Refresh rate +100ms (slower)
   r              Force redraw / re-collect
@@ -89,7 +89,7 @@ NPU (RKNPU)
   parsed as "Core0: N%, Core1: N%, Core2: N%".
   Some BSPs stick at 100% under rknpu_ondemand — flagged as "raw".
 
-MPP Load (VPU codecs)
+VPU (mpp_service)
   Rockchip MPP umbrella for HW codecs (rkvdec/rkvenc/av1d/jpeg).
   Root mode: writes load_interval=1000 then reads
   /proc/mpp_service/load → per-engine load% and util%.
@@ -99,7 +99,7 @@ MPP Load (VPU codecs)
 
 RGA (2D accel)
   /sys/kernel/debug/rkrga/load (root) gives per-scheduler load%.
-	Configured core clocks from /sys/kernel/debug/clk/*/clk_rate (root).
+  Configured core clocks from /sys/kernel/debug/clk/*/clk_rate (root).
   RK3588 exposes rga3 x2 + rga2 x1 (rga3 duplicate suffix _1).
 
 Thermal zones

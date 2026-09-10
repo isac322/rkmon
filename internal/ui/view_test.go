@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"charm.land/lipgloss/v2"
 	"github.com/isac322/rkmon/internal/collect"
 )
 
-func TestRenderMPPAndRGAClocks(t *testing.T) {
+func TestRenderVPUAndRGAClocks(t *testing.T) {
 	snapshot := &collect.Snapshot{
 		VPU: collect.VPUInfo{
 			Mode: "load",
@@ -32,7 +33,7 @@ func TestRenderMPPAndRGAClocks(t *testing.T) {
 
 	got := Render(NewStyles(true), snapshot, time.Second, 0, 100, 0, [3]int8{}, sections, 0)
 	for _, want := range []string{
-		"MPP Load", "rkvdec-core0", "594 MHz",
+		"VPU (mpp_service)", "rkvdec-core0", "594 MHz",
 		"av1d0", "400 MHz", "jpegd0", "600 MHz", "jpege-core0", "500 MHz",
 		"rga3", "750 MHz",
 	} {
@@ -40,8 +41,17 @@ func TestRenderMPPAndRGAClocks(t *testing.T) {
 			t.Errorf("render missing %q:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "VPU (mpp_service)") {
-		t.Errorf("render contains old MPP heading:\n%s", got)
+	if strings.Contains(got, "MPP Load") {
+		t.Errorf("render contains MPP Load heading:\n%s", got)
+	}
+}
+
+func TestFormatClockMHzReservesColumn(t *testing.T) {
+	s := NewStyles(true)
+	if lipgloss.Width(formatClockMHz(s, 0)) != lipgloss.Width(formatClockMHz(s, 594_000_000)) {
+		t.Fatalf("empty clock width %d, 594 MHz width %d",
+			lipgloss.Width(formatClockMHz(s, 0)),
+			lipgloss.Width(formatClockMHz(s, 594_000_000)))
 	}
 }
 
