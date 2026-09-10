@@ -22,7 +22,6 @@ const (
 	RKNPULoad   = "/sys/kernel/debug/rknpu/load"
 	MPPLoad     = "/proc/mpp_service/load"
 	MPPInterval = "/proc/mpp_service/load_interval"
-	MPPSessions = "/proc/mpp_service/sessions-summary"
 	RGALoad     = "/sys/kernel/debug/rkrga/load"
 	ClockDebug  = "/sys/kernel/debug/clk"
 )
@@ -334,12 +333,6 @@ func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 			}
 		}
 	}
-
-	// Active session count is sudoless.
-	if raw, err := c.readFileBuf(MPPSessions); err == nil {
-		snap.VPU.Sessions = ParseMPPSessions(raw)
-	}
-
 	// Prefer real %-load from /proc/mpp_service/load (root + interval set).
 	if raw, err := c.readFileBuf(MPPLoad); err == nil {
 		entries := ParseMPPLoad(raw)

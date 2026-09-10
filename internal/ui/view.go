@@ -572,12 +572,10 @@ func renderVPU(s Styles, l Layout, snap *collect.Snapshot) []string {
 		return []string{contentRow(s, l, s.hint("no vpu data"))}
 	}
 	v := snap.VPU
-	sessionsTag := fmt.Sprintf("%s %d", s.label("sess"), v.Sessions)
-
 	if v.Mode == "load" && len(v.Engines) > 0 {
 		shown := filterVPUEngines(v.Engines)
 		if l.Narrow {
-			parts := []string{sessionsTag}
+			parts := make([]string, 0, len(shown))
 			for _, e := range shown {
 				parts = append(parts, fmt.Sprintf("%s %s",
 					shortVPUName(e.Name),
@@ -586,7 +584,7 @@ func renderVPU(s Styles, l Layout, snap *collect.Snapshot) []string {
 			return []string{contentRow(s, l, strings.Join(parts, "  "))}
 		}
 		labelW := vpuLabelW(shown)
-		rows := []string{contentRow(s, l, sessionsTag)}
+		rows := make([]string, 0, len(shown))
 		for _, e := range shown {
 			label := padVisible(s.label(e.Name), labelW)
 			bar := renderBar(s, e.LoadPct, l.BarW)
@@ -599,16 +597,16 @@ func renderVPU(s Styles, l Layout, snap *collect.Snapshot) []string {
 	}
 
 	// rates mode (sudoless fallback): show tasks/s for active engines
-	parts := []string{sessionsTag}
+	var parts []string
 	for _, e := range v.Engines {
-		if e.TasksPerSec < 0.01 && v.Sessions == 0 {
+		if e.TasksPerSec < 0.01 {
 			continue
 		}
 		parts = append(parts, fmt.Sprintf("%s %s",
 			shortVPUName(e.Name),
 			s.value(fmt.Sprintf("%.0f/s", e.TasksPerSec))))
 	}
-	if len(parts) == 1 {
+	if len(parts) == 0 {
 		// nothing happening; show all engines compactly
 		for _, e := range v.Engines {
 			parts = append(parts, fmt.Sprintf("%s %s",

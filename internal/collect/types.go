@@ -69,9 +69,8 @@ type NPUCores struct {
 
 // VPUInfo describes Rockchip MPP service state.
 type VPUInfo struct {
-	Mode     string // "load" (root w/ load_interval set) | "rates" (delta task_count) | "sessions"
-	Sessions int
-	Engines  []VPUEngine
+	Mode    string // "load" (root w/ load_interval set) | "rates" (delta task_count)
+	Engines []VPUEngine
 }
 
 type VPUEngine struct {

@@ -129,7 +129,7 @@ Every panel reads from a public kernel interface. The full provenance is also av
 | NPU aggregate | `/sys/class/devfreq/fdab0000.npu/{load,cur_freq}` | no |
 | **NPU per‑core** | `/sys/kernel/debug/rknpu/load` | **yes** |
 | DDR controller | `/sys/class/devfreq/dmc/load` | no |
-| VPU sessions | `/proc/mpp_service/sessions-summary` + `task_count` | no |
+| VPU tasks/s | `/proc/mpp_service/*/task_count` | no |
 | **VPU load %** | `/proc/mpp_service/load` (sets `load_interval=1000` once) | **yes** |
 | **RGA load %** | `/sys/kernel/debug/rkrga/load` | **yes** |
 | Thermal zones | `/sys/class/thermal/thermal_zone*/{type,temp}` | no |
