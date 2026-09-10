@@ -401,6 +401,9 @@ func renderStatusRow(s Styles, l Layout, snap *collect.Snapshot, refresh time.Du
 	left := fmt.Sprintf("%s %s  %s %s",
 		s.label("Load"), s.value(loadStr),
 		s.label("Tasks"), s.value(tasks))
+	if snap.Host.MaxPerformance {
+		left += "  " + s.title("PERF MAX")
+	}
 	right := fmt.Sprintf("%s %s  %s %d",
 		s.label("refresh"), s.value(refresh.String()),
 		s.label("tick"), tick)
@@ -585,8 +588,9 @@ func renderVPU(s Styles, l Layout, snap *collect.Snapshot) []string {
 			label := padVisible(s.label(e.Name), labelW)
 			bar := renderBar(s, e.LoadPct, l.BarW)
 			pct := pctText(s, int(e.LoadPct+0.5))
+			clock := formatClockMHz(s, e.ClockHz)
 			util := s.dim(fmt.Sprintf("util %.1f%%", e.UtilPct))
-			rows = append(rows, contentRow(s, l, fmt.Sprintf("%s%s %s  %s", label, bar, pct, util)))
+			rows = append(rows, contentRow(s, l, fmt.Sprintf("%s%s %s %s  %s", label, bar, pct, clock, util)))
 		}
 		return rows
 	}
@@ -637,9 +641,17 @@ func renderRGA(s Styles, l Layout, snap *collect.Snapshot) []string {
 		label := padVisible(s.label(c.Name), l.LabelW)
 		bar := renderBar(s, float64(c.LoadPct), l.BarW)
 		pct := pctText(s, c.LoadPct)
-		rows = append(rows, contentRow(s, l, fmt.Sprintf("%s%s %s", label, bar, pct)))
+		clock := formatClockMHz(s, c.ClockHz)
+		rows = append(rows, contentRow(s, l, fmt.Sprintf("%s%s %s %s", label, bar, pct, clock)))
 	}
 	return rows
+}
+
+func formatClockMHz(s Styles, hz uint64) string {
+	if hz == 0 {
+		return "        "
+	}
+	return s.label(fmt.Sprintf("%4d MHz", hz/1_000_000))
 }
 
 func renderISP(s Styles, l Layout, snap *collect.Snapshot) string {
@@ -1017,7 +1029,7 @@ func renderFooter(s Styles, l Layout, tiers [3]int8, sections [SecCount]bool, he
 		now = time.Now().Format("15:04")
 	}
 	line1 := strings.Join(secParts, "  ") + "  " + tierMap + "  " + s.dim("· "+now)
-	line2 := s.hint("[q]quit  [+/-]refresh  [r]redraw  [?]help  [↑↓/pgup/pgdn/home/end]scroll")
+	line2 := s.hint("[q]quit  [p]perf  [+/-]refresh  [r]redraw  [?]help  [↑↓/pgup/pgdn/home/end]scroll")
 	if l.Width > 0 {
 		if lipgloss.Width(line1) > l.Width {
 			line1 = ansi.Truncate(line1, l.Width, "…")

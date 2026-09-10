@@ -28,13 +28,14 @@ type Snapshot struct {
 }
 
 type HostInfo struct {
-	Hostname     string
-	Kernel       string
-	Uptime       time.Duration
-	LoadAvg      [3]float64
-	ProcsRunning int
-	ProcsTotal   int
-	IsRoot       bool
+	Hostname       string
+	Kernel         string
+	Uptime         time.Duration
+	LoadAvg        [3]float64
+	ProcsRunning   int
+	ProcsTotal     int
+	IsRoot         bool
+	MaxPerformance bool
 }
 
 type CPUCore struct {
@@ -77,6 +78,7 @@ type VPUEngine struct {
 	LoadPct     float64 // -1 if unavailable
 	UtilPct     float64
 	TasksPerSec float64
+	ClockHz     uint64
 }
 
 type RGAInfo struct {
@@ -87,6 +89,7 @@ type RGAInfo struct {
 type RGACore struct {
 	Name    string // e.g. "rga3_core0", "rga2"
 	LoadPct int    // 0..100
+	ClockHz uint64
 }
 
 type ISPInfo struct {

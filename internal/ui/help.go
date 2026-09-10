@@ -34,8 +34,12 @@ Tier toggles  (binary on/off, shown after core sections on screen)
         Initial state is "auto" (height-based) until first key press.
         Note: at width >= 150, PCIe shows in the right column always.
 
+        Visibility choices persist in ~/.config/rkmon/config.json.
+        When run with sudo, this is root's config home.
+
 Controls
   q / ctrl+c     Quit
+  p              Toggle max-performance governors (sudo; restored on exit)
   + / =          Refresh rate -100ms (faster)
   - / _          Refresh rate +100ms (slower)
   r              Force redraw / re-collect
@@ -76,8 +80,7 @@ Memory
   not capacity) from /sys/class/devfreq/dmc/load (N@FreqHz format).
 
 GPU (Mali-G610)
-  Utilization from the first usable RK3588 GPU devfreq load node
-  (gpu-panthor, gpu-mali, or gpu).
+  /sys/class/devfreq/fb000000.gpu-mali/load (utilization %).
   Freq + range from cur_freq / min_freq / max_freq.
 
 NPU (RKNPU)
@@ -90,11 +93,13 @@ VPU (mpp_service)
   Rockchip MPP umbrella for HW codecs (rkvdec/rkvenc/av1d/jpeg).
   Root mode: writes load_interval=1000 then reads
   /proc/mpp_service/load → per-engine load% and util%.
+  Configured core clocks from /sys/kernel/debug/clk/*/clk_rate (root).
   User mode: parses delta task_count
   per rkvdec-core{0,1}/task_count (= tasks/s rate).
 
 RGA (2D accel)
   /sys/kernel/debug/rkrga/load (root) gives per-scheduler load%.
+  Configured core clocks from /sys/kernel/debug/clk/*/clk_rate (root).
   RK3588 exposes rga3 x2 + rga2 x1 (rga3 duplicate suffix _1).
 
 Thermal zones

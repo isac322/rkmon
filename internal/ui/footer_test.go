@@ -69,3 +69,15 @@ func TestRenderFooterShowsAllSectionKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderFooterShowsPerfKey(t *testing.T) {
+	s := NewStyles(true)
+	l := Layout{Width: 100}
+	got := renderFooter(s, l, [3]int8{}, DefaultSections(), 40)
+	if !strings.Contains(got, "[p]perf") {
+		t.Fatalf("footer missing perf key: %q", got)
+	}
+	if strings.Contains(got, "max-perf") {
+		t.Fatalf("footer still has long max-perf label: %q", got)
+	}
+}

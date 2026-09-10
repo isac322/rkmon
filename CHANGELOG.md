@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Reversible `p` max-performance toggle for supported CPU, GPU, NPU, and DDR governors; previous settings are restored when disabled or on exit.
 ### Fixed
 
 - **Stop polling `/proc/mpp_service/sessions-summary` (#13)**.

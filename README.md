@@ -31,6 +31,7 @@ The RK3588 is one of the most capable ARM SoCs ever shipped to hobbyists: an 8�
 - **Responsive layout**: collapses to 60 cols, expands to a two‑column wide layout at ≥150 cols. Body scrolls when content exceeds height; top/bottom border + footer stay pinned.
 - **Per‑section toggles**: turn CPU/MEM/GPU/NPU/VPU/RGA panels on or off with a single keypress (`c`/`m`/`g`/`n`/`v`/`a`).
 - **Optional tiers**: I/O (disks + network + thermal throttle), System (CMA, fan PWM, governor, PCIe links), and Kernel (context switches/sec, IRQ per‑CPU) — toggled with `i`/`s`/`k`, auto‑shown when the terminal is tall enough.
+- **Persistent layout**: section and tier choices are restored from `~/.config/rkmon/config.json` (or `$XDG_CONFIG_HOME/rkmon/config.json`).
 - **Multi‑tab help**: keybinds, metric provenance (every sysfs/proc path is documented), and copy‑paste stress‑test recipes (`yes`/`stress-ng`/`ffmpeg`/`glmark2`/`iperf3`) per metric.
 - **One‑shot mode** (`--once`) writes a single snapshot to stdout — perfect for `cron`, dashboards, or shipping to Prometheus via a wrapper.
 - **Cleanly handles non‑root**: stale NPU readings are flagged, sudo‑only metrics show a hint instead of lying.
@@ -82,6 +83,7 @@ sudo rkmon               # unlock NPU per-core, VPU load%, RGA load%
 | `r` | Force redraw |
 | `c` `m` `g` `n` `v` `a` | Toggle CPU / MEM / GPU / NPU / VPU / RGA panels |
 | `i` `s` `k` | Toggle I/O / System / Kernel tiers (also `1` `2` `3`) |
+| `p` | Toggle max-performance governors for CPU/GPU/NPU/DDR (requires root; restored on exit) |
 | `?` | Open multi-tab help (keybinds, metrics, stress tests) |
 | `↑` `↓` `j` | Scroll body one row |
 | `pgup` `pgdn` `space` | Scroll body one page |

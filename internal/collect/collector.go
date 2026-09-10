@@ -24,7 +24,21 @@ const (
 	MPPLoad     = "/proc/mpp_service/load"
 	MPPInterval = "/proc/mpp_service/load_interval"
 	RGALoad     = "/sys/kernel/debug/rkrga/load"
+	ClockDebug  = "/sys/kernel/debug/clk"
 )
+
+var vpuClockNames = map[string]string{
+	"rkvdec-core0": "clk_rkvdec0_core",
+	"rkvdec-core1": "clk_rkvdec1_core",
+	"rkvenc-core0": "clk_rkvenc0_core",
+	"rkvenc-core1": "clk_rkvenc1_core",
+	"av1d0":        "aclk_av1",
+	"jpegd0":       "aclk_jpeg_decoder",
+	"jpege-core0":  "aclk_jpeg_encoder0",
+	"jpege-core1":  "aclk_jpeg_encoder1",
+	"jpege-core2":  "aclk_jpeg_encoder2",
+	"jpege-core3":  "aclk_jpeg_encoder3",
+}
 
 // Cluster mapping for RK3588: cpu0-3 = A55 (little), cpu4-7 = A76 (big).
 var (
@@ -37,7 +51,9 @@ var (
 )
 
 type Collector struct {
-	mu sync.Mutex
+	mu              sync.Mutex
+	performanceRoot string
+	savedGovernors  []governorSetting
 
 	prevCPU      map[string]CPUTimes
 	prevSnapshot *Snapshot
@@ -159,13 +175,14 @@ func (c *Collector) readHost(snap *Snapshot) {
 
 	avg, running, total := ParseLoadavg(loadRaw)
 	snap.Host = HostInfo{
-		Hostname:     hostname,
-		Kernel:       kernel,
-		Uptime:       time.Duration(ParseUptimeSeconds(uptimeRaw) * float64(time.Second)),
-		LoadAvg:      avg,
-		ProcsRunning: running,
-		ProcsTotal:   total,
-		IsRoot:       os.Geteuid() == 0,
+		Hostname:       hostname,
+		Kernel:         kernel,
+		Uptime:         time.Duration(ParseUptimeSeconds(uptimeRaw) * float64(time.Second)),
+		LoadAvg:        avg,
+		ProcsRunning:   running,
+		ProcsTotal:     total,
+		IsRoot:         os.Geteuid() == 0,
+		MaxPerformance: len(c.savedGovernors) > 0,
 	}
 }
 
@@ -327,10 +344,12 @@ func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 			for _, e := range entries {
 				idx := indexOf[e.Device]
 				indexOf[e.Device]++
+				name := e.Device + strconv.Itoa(idx)
 				eng = append(eng, VPUEngine{
-					Name:    e.Device + strconv.Itoa(idx),
+					Name:    name,
 					LoadPct: e.LoadPct,
 					UtilPct: e.UtilPct,
+					ClockHz: c.readClockHz(vpuClockNames[name]),
 				})
 			}
 			snap.VPU.Engines = eng
@@ -370,6 +389,7 @@ func (c *Collector) readVPU(snap *Snapshot, now time.Time) {
 			Name:        k,
 			LoadPct:     -1,
 			TasksPerSec: rate,
+			ClockHz:     c.readClockHz(vpuClockNames[k]),
 		})
 	}
 	c.prevTaskCount = curCounts
@@ -383,7 +403,35 @@ func (c *Collector) readRGA(snap *Snapshot) {
 		return
 	}
 	cores := ParseRGALoad(raw)
+	for i := range cores {
+		cores[i].ClockHz = c.readClockHz(rgaClockName(cores[i].Name))
+	}
 	snap.RGA = RGAInfo{Available: len(cores) > 0, Cores: cores}
+}
+
+func (c *Collector) readClockHz(name string) uint64 {
+	if name == "" {
+		return 0
+	}
+	raw, err := readFile(filepath.Join(ClockDebug, name, "clk_rate"))
+	if err != nil {
+		return 0
+	}
+	hz, _ := strconv.ParseUint(strings.TrimSpace(raw), 10, 64)
+	return hz
+}
+
+func rgaClockName(name string) string {
+	switch name {
+	case "rga3", "rga3_core0":
+		return "clk_rga3_0_core"
+	case "rga3_1", "rga3_core1":
+		return "clk_rga3_1_core"
+	case "rga2", "rga2_core0":
+		return "clk_rga2_core"
+	default:
+		return ""
+	}
 }
 
 func (c *Collector) readISP(snap *Snapshot) {
@@ -829,6 +877,7 @@ func (c *Collector) readFileBuf(path string) (string, error) {
 func (c *Collector) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	_ = c.restoreGovernors()
 	for _, fd := range c.persistentFDs {
 		_ = unix.Close(fd)
 	}

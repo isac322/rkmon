@@ -35,7 +35,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "rkmon - RK3588 hardware monitor TUI\n\n")
 		fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n\nFlags:\n", os.Args[0])
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nKeybinds (TUI), in screen order:\n  c m g n v a  toggle CPU/MEM/GPU/NPU/VPU/RGA sections\n  i s k        toggle I/O / System / Kernel tiers (1/2/3 also accepted)\n  ↑↓ pgup pgdn home end  scroll main view (j also = down)\n  q/ctrl+c     quit\n  + / -        adjust refresh ±100ms\n  r            force redraw / re-collect\n  ?            open multi-tab help; inside: tab/←→ tabs, ↑↓/pgup/pgdn/g/G scroll, esc close\n")
+		fmt.Fprintf(os.Stderr, "\nKeybinds (TUI), in screen order:\n  c m g n v a  toggle CPU/MEM/GPU/NPU/VPU/RGA sections\n  i s k        toggle I/O / System / Kernel tiers (1/2/3 also accepted)\n  p            toggle max-performance governors (sudo; restored on exit)\n  ↑↓ pgup pgdn home end  scroll main view (j also = down)\n  q/ctrl+c     quit\n  + / -        adjust refresh ±100ms\n  r            force redraw / re-collect\n  ?            open multi-tab help; inside: tab/←→ tabs, ↑↓/pgup/pgdn/g/G scroll, esc close\n")
 	}
 	flag.Parse()
 
@@ -77,6 +77,7 @@ func main() {
 	}
 
 	c := collect.New()
+	defer c.Close()
 
 	tiers, parseErr := ui.ParseTiersFlag(*tiersFlag)
 	if parseErr != nil {
@@ -106,7 +107,6 @@ func main() {
 	model := ui.NewModelWithTiers(c, *refresh, !*noColor, tiers)
 	p := tea.NewProgram(model)
 	_, runErr := p.Run()
-	c.Close()
 	if runErr != nil {
 		fmt.Fprintln(os.Stderr, runErr)
 		os.Exit(1)
