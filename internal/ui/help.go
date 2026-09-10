@@ -89,7 +89,7 @@ VPU (mpp_service)
   Rockchip MPP umbrella for HW codecs (rkvdec/rkvenc/av1d/jpeg).
   Root mode: writes load_interval=1000 then reads
   /proc/mpp_service/load → per-engine load% and util%.
-  User mode: parses sessions-summary count + delta task_count
+  User mode: parses delta task_count
   per rkvdec-core{0,1}/task_count (= tasks/s rate).
 
 RGA (2D accel)
@@ -161,7 +161,7 @@ VPU (mpp_service) — proven workload
   # On a host with h264_rkmpp ffmpeg (Rockchip BSP build):
   ffmpeg -hide_banner -loglevel error -re -stream_loop 50 \
     -i src.mp4 -c:v h264_rkmpp -f null -
-  # Watch rkvenc/rkvdec engines + session count.
+  # Watch rkvenc/rkvdec engine loads and tasks/s.
 
 RGA (2D accel)
   ffmpeg ... -vf scale_rkrga=W:H ...    # scale_rkrga driver

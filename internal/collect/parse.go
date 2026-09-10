@@ -164,17 +164,6 @@ func ParseMPPLoad(s string) []MPPLoadEntry {
 	return out
 }
 
-// ParseMPPSessions counts active "device:" lines in sessions-summary.
-func ParseMPPSessions(s string) int {
-	n := 0
-	for _, line := range strings.Split(s, "\n") {
-		if strings.Contains(line, "device:") {
-			n++
-		}
-	}
-	return n
-}
-
 var (
 	rgaSchedulerRE = regexp.MustCompile(`scheduler\[(\d+)\]:\s*([^\s,]+)`)
 	rgaLoadRE      = regexp.MustCompile(`load\s*=\s*(\d+)%`)

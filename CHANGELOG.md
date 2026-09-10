@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Stop polling `/proc/mpp_service/sessions-summary` (#13)**.
+  Rockchip's BSP MPP driver races session teardown against
+  `mpp_show_session_summary`: `vepu_dump_session` can `down_read` a NULL
+  `rw_semaphore` and Oops. VPU load% still comes from
+  `/proc/mpp_service/load`; sudoless tasks/s still comes from per-engine
+  `task_count`.
+
 ## [0.3.1] - 2026-06-13
 
 ### Performance
