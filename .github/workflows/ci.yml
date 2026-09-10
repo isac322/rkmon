@@ -16,16 +16,12 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        go: ["1.27"]
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-go@v7
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "1.27"
           check-latest: true
 
       - name: go test (-race)
