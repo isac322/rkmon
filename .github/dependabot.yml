@@ -10,7 +10,7 @@ updates:
       timezone: Asia/Seoul
     open-pull-requests-limit: 10
     commit-message:
-      prefix: deps
+      prefix: chore
       include: scope
     labels:
       - dependencies
@@ -56,16 +56,3 @@ updates:
         patterns:
           - "goreleaser/*"
           - "golangci/*"
-
-  # Git submodules (no-op today, future-proof for any vendored deps)
-  - package-ecosystem: gitsubmodule
-    directory: /
-    schedule:
-      interval: monthly
-    open-pull-requests-limit: 2
-    commit-message:
-      prefix: deps
-      include: scope
-    labels:
-      - dependencies
-      - submodule
